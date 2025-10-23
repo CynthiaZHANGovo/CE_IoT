@@ -1,0 +1,7 @@
+Connect the ECHO pin of the HC-SR04 to a row on the breadboard (let's call it Row A).
+Insert one end of the 20 kΩ resistor (R1) into the same Row A. (This means one end of R1 is electrically connected to ECHO.)
+Insert the other end of the 20 kΩ resistor into another row on the breadboard (referred to as Row B), which serves as the "middle node."
+Connect one end of the 10 kΩ resistor (R2) to Row B (the same row as the other end of R1).
+Connect the other end of the 10 kΩ resistor to the blue rail (GND) of the breadboard.
+Run a wire from Row B to pin D9 of the MKR1010.
+This way, the voltage at Row B will be the divided voltage of approximately 3.3V (when ECHO is 5V), which is suitable for D9
