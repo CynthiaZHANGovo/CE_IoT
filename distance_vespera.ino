@@ -56,23 +56,20 @@ void loop() {
   mqttClient.loop();
 
   long distance = readDistanceCM();
-  
-  // Skip invalid readings without updating color
-  if (distance <= 0) return;
+  if (distance <= 0) return; // Invalid reading
 
-  // Handle out-of-range values by forcing to blue
+  // Limit distance range 5~100cm, beyond remains blue
   bool outOfRange = false;
   if (distance < 5 || distance > 100) {
-    distance = 100; // Use blue color for out-of-range
+    distance = 100; // Blue
     outOfRange = true;
   }
 
   int newR, newG, newB;
   if (outOfRange) {
-    // Blue color for out-of-range conditions
-    newR = 0; newG = 0; newB = 255;
+    newR = 0; newG = 0; newB = 255; // Out of range blue
   } else {
-    // Distance-based color mapping: close=red, far=blue
+    // Close: Red, Far: Blue
     if (distance < 20) {
       newR = 255;
       newG = map(distance, 5, 20, 0, 100);
@@ -92,7 +89,7 @@ void loop() {
     }
   }
 
-  // Update MQTT payload with new color
+  // Update MQTT payload
   fillColorToPayload(newR, newG, newB);
   mqttClient.publish(mqtt_topic.c_str(), RGBpayload, payload_size);
 
@@ -118,7 +115,7 @@ long readDistanceCM() {
   delayMicroseconds(10);
   digitalWrite(TRIG_PIN, LOW);
 
-  long duration = pulseIn(ECHO_PIN, HIGH, 30000); // Max 30ms timeout
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000); // Max 30ms
   if (duration == 0) {
     Serial.println("⚠️ Invalid distance reading");
     return -1;
@@ -136,7 +133,7 @@ void fillColorToPayload(int r, int g, int b) {
   }
 }
 
-// ======== Wi-Fi Connection ========
+// ======== Wi-Fi ========
 void startWifi() {
   Serial.print("Connecting to ");
   Serial.println(ssid);
@@ -162,6 +159,4 @@ void reconnectMQTT() {
 }
 
 // ======== MQTT Callback ========
-void callback(char* topic, byte* payload, unsigned int length) {
-  // Empty callback - no subscription handling needed
-}
+void callback(char* topic, byte* payload, unsigned int length) {}
