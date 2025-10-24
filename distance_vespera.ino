@@ -69,12 +69,24 @@ void loop() {
   if (outOfRange) {
     newR = 0; newG = 0; newB = 255; // Out of range blue
   } else {
-    // Simple red to blue gradient based on distance
-    // Close distance = red (255, 0, 0)
-    // Far distance = blue (0, 0, 255)
-    newR = map(distance, 5, 100, 255, 0);
-    newG = 0; 
-    newB = map(distance, 5, 100, 0, 255);
+    // Close: Red, Far: Blue
+    if (distance < 20) {
+      newR = 255;
+      newG = map(distance, 5, 20, 0, 100);
+      newB = 0;
+    } else if (distance < 50) {
+      newR = map(distance, 20, 40, 255, 0);
+      newG = map(distance, 20, 40, 100, 0);
+      newB = map(distance, 20, 40, 0, 100);
+    } else if (distance < 60) {
+      newR = 0;
+      newG = map(distance, 40, 60, 0, 50);
+      newB = map(distance, 40, 60, 100, 200);
+    } else {
+      newR = 0;
+      newG = 0;
+      newB = 255;
+    }
   }
 
   // Update MQTT payload
