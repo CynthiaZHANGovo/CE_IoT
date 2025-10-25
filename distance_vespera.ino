@@ -14,7 +14,7 @@ const int mqtt_port       = 1884;
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
-// MQTT Topic
+// ======== MQTT Topic ========
 String lightId = "29";
 String mqtt_topic = "student/CASA0014/luminaire/" + lightId;
 
@@ -23,22 +23,27 @@ String mqtt_topic = "student/CASA0014/luminaire/" + lightId;
 #define ECHO_PIN 9
 
 // ======== Global Variables ========
-long lastDistance = 0;   // Last measured distance
-const int num_leds = 72; // Number of LEDs in remote strip
+long lastDistance = 0;
+const int num_leds = 72; // 6 rows × 12 columns
 const int payload_size = num_leds * 3;
 byte RGBpayload[payload_size];
+
+// Current color storage
+int currentR = 0, currentG = 0, currentB = 255; // Initial blue
 
 // ======== Function Declarations ========
 void startWifi();
 void reconnectMQTT();
 void callback(char* topic, byte* payload, unsigned int length);
 long readDistanceCM();
-void fillColorToPayload(int r, int g, int b);
+void fillRowColor(int row, int r, int g, int b);
+void publishPayload();
+void scrollRowsBottomToTop(int newR, int newG, int newB, int delta);
+void getGradientColor(long distance, int &r, int &g, int &b);
 
 // ======== Setup Initialization ========
 void setup() {
   Serial.begin(115200);
-
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
 
@@ -47,7 +52,14 @@ void setup() {
   mqttClient.setCallback(callback);
   mqttClient.setBufferSize(2000);
 
-  Serial.println("✅ Setup complete.");
+  // Initial all blue
+  for (int i = 0; i < num_leds; i++) {
+    RGBpayload[i * 3 + 0] = 0;
+    RGBpayload[i * 3 + 1] = 0;
+    RGBpayload[i * 3 + 2] = 255;
+  }
+  publishPayload();
+  Serial.println(" Setup complete.");
 }
 
 // ======== Main Loop ========
@@ -58,46 +70,32 @@ void loop() {
   long distance = readDistanceCM();
   if (distance <= 0) return; // Invalid reading
 
-  // Limit distance range 5~100cm, beyond remains blue
+  // Limit range 5~100cm
   bool outOfRange = false;
   if (distance < 5 || distance > 100) {
-    distance = 100; // Blue
+    distance = constrain(distance, 5, 100);
     outOfRange = true;
   }
 
   int newR, newG, newB;
-  if (outOfRange) {
-    newR = 0; newG = 0; newB = 255; // Out of range blue
-  } else {
-    // Close: Red, Far: Blue
-    if (distance < 20) {
-      newR = 255;
-      newG = map(distance, 5, 20, 0, 100);
-      newB = 0;
-    } else if (distance < 50) {
-      newR = map(distance, 20, 40, 255, 0);
-      newG = map(distance, 20, 40, 100, 0);
-      newB = map(distance, 20, 40, 0, 100);
-    } else if (distance < 60) {
-      newR = 0;
-      newG = map(distance, 40, 60, 0, 50);
-      newB = map(distance, 40, 60, 100, 200);
-    } else {
-      newR = 0;
-      newG = 0;
-      newB = 255;
-    }
-  }
+  getGradientColor(distance, newR, newG, newB);
 
-  // Update MQTT payload
-  fillColorToPayload(newR, newG, newB);
-  mqttClient.publish(mqtt_topic.c_str(), RGBpayload, payload_size);
+  int delta = abs(distance - lastDistance);
+
+  if (delta > 1) {
+    scrollRowsBottomToTop(newR, newG, newB, delta);
+    currentR = newR;
+    currentG = newG;
+    currentB = newB;
+  }
 
   lastDistance = distance;
 
-  Serial.print("📏 Distance: ");
+  Serial.print(" Distance: ");
   Serial.print(distance);
-  Serial.print(" cm  🎨 Color: R=");
+  Serial.print(" cm  Δ=");
+  Serial.print(delta);
+  Serial.print("   R=");
   Serial.print(newR);
   Serial.print(" G=");
   Serial.print(newG);
@@ -107,33 +105,78 @@ void loop() {
   delay(100);
 }
 
-// ======== HC-SR04 Distance Reading ========
+// ======== Distance → Multi-color Gradient Mapping ========
+void getGradientColor(long distance, int &r, int &g, int &b) {
+  if (distance < 10) {            // Red
+    r = 255; g = 0; b = 0;
+  } else if (distance < 15) {     // Orange
+    r = 255; g = 100; b = 0;
+  } else if (distance < 20) {     // Yellow
+    r = 255; g = 255; b = 0;
+  } else if (distance < 25) {     // Green
+    r = 0; g = 255; b = 0;
+  } 
+  // else if (distance < 30) {   // Cyan
+  //  r = 0; g = 150; b = 255;
+  // }
+   else {                        // Blue
+    r = 0; g = 0; b = 255;
+  }
+}
+
+// ======== Scroll Rows Bottom to Top ========
+void scrollRowsBottomToTop(int newR, int newG, int newB, int delta) {
+  // Adjust scroll speed and brightness based on movement speed
+  int stepDelay;
+  if (delta < 3) stepDelay = 250;
+  else if (delta < 10) stepDelay = 120;
+  else stepDelay = 40;
+
+  float scaleFactor = map(constrain(delta, 1, 30), 1, 30, 50, 100) / 100.0;
+  int scaledR = constrain((int)(newR * scaleFactor), 0, 255);
+  int scaledG = constrain((int)(newG * scaleFactor), 0, 255);
+  int scaledB = constrain((int)(newB * scaleFactor), 0, 255);
+
+  for (int row = 5; row >= 0; row--) {
+    fillRowColor(row, scaledR, scaledG, scaledB);
+    publishPayload();
+    delay(stepDelay);
+  }
+
+  Serial.print(" Scroll bottom→top done, delay=");
+  Serial.print(stepDelay);
+  Serial.print("ms, brightness scale=");
+  Serial.println(scaleFactor, 2);
+}
+
+// ======== Fill One Row (12 LEDs) with Color ========
+void fillRowColor(int row, int r, int g, int b) {
+  for (int i = 0; i < 12; i++) {
+    int index = i * 6 + row; // 6 LEDs per column
+    RGBpayload[index * 3 + 0] = r;
+    RGBpayload[index * 3 + 1] = g;
+    RGBpayload[index * 3 + 2] = b;
+  }
+}
+
+// ======== MQTT Publish ========
+void publishPayload() {
+  mqttClient.publish(mqtt_topic.c_str(), RGBpayload, payload_size);
+}
+
+// ======== Distance Measurement ========
 long readDistanceCM() {
   digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
   digitalWrite(TRIG_PIN, HIGH);
   delayMicroseconds(10);
   digitalWrite(TRIG_PIN, LOW);
-
-  long duration = pulseIn(ECHO_PIN, HIGH, 30000); // Max 30ms
-  if (duration == 0) {
-    Serial.println("⚠️ Invalid distance reading");
-    return -1;
-  }
-  long distance = duration / 58.2;
-  return distance;
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+  if (duration == 0) return -1;
+  return duration / 58.2;
 }
 
-// ======== Fill MQTT Payload ========
-void fillColorToPayload(int r, int g, int b) {
-  for (int p = 0; p < num_leds; p++) {
-    RGBpayload[p * 3 + 0] = r;
-    RGBpayload[p * 3 + 1] = g;
-    RGBpayload[p * 3 + 2] = b;
-  }
-}
-
-// ======== Wi-Fi ========
+// ======== Network Functions ========
 void startWifi() {
   Serial.print("Connecting to ");
   Serial.println(ssid);
@@ -141,10 +184,9 @@ void startWifi() {
     delay(2000);
     Serial.print(".");
   }
-  Serial.println("\n🌐 WiFi connected.");
+  Serial.println("\n WiFi connected.");
 }
 
-// ======== MQTT Reconnection ========
 void reconnectMQTT() {
   while (!mqttClient.connected()) {
     Serial.print("Attempting MQTT connection...");
@@ -158,5 +200,4 @@ void reconnectMQTT() {
   }
 }
 
-// ======== MQTT Callback ========
 void callback(char* topic, byte* payload, unsigned int length) {}
