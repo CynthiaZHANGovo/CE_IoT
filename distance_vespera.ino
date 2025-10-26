@@ -24,6 +24,7 @@ String mqtt_topic = "student/CASA0014/luminaire/" + lightId;
 
 // ======== Global Variables ========
 long lastDistance = 0;
+long lastTime = 0;
 const int num_leds = 72; // 6 rows × 12 columns
 const int payload_size = num_leds * 3;
 byte RGBpayload[payload_size];
@@ -59,6 +60,7 @@ void setup() {
     RGBpayload[i * 3 + 2] = 255;
   }
   publishPayload();
+  lastTime = millis();
   Serial.println(" Setup complete.");
 }
 
@@ -67,8 +69,18 @@ void loop() {
   if (!mqttClient.connected()) reconnectMQTT();
   mqttClient.loop();
 
+  long currentTime = millis();
   long distance = readDistanceCM();
   if (distance <= 0) return; // Invalid reading
+
+  // Calculate speed (cm/s)
+  float speed = 0;
+  if (lastTime > 0) {
+    long timeDiff = currentTime - lastTime;
+    if (timeDiff > 0) {
+      speed = abs(distance - lastDistance) / (float)timeDiff * 1000.0;
+    }
+  }
 
   // Limit range 5~100cm
   bool outOfRange = false;
@@ -82,20 +94,43 @@ void loop() {
 
   int delta = abs(distance - lastDistance);
 
+  // Apply speed-based brightness to all colors
+  float brightnessFactor = 1.0;
+  if (lastTime > 0) {
+    // Map speed to brightness: 0-10 cm/s -> 0.3-1.0 brightness
+    brightnessFactor = constrain(map(speed, 0, 10, 0.3, 1.0), 0.3, 1.0);
+    
+    newR = (int)(newR * brightnessFactor);
+    newG = (int)(newG * brightnessFactor);
+    newB = (int)(newB * brightnessFactor);
+  }
+
   if (delta > 1) {
     scrollRowsBottomToTop(newR, newG, newB, delta);
+    // Keep the adjusted brightness colors
     currentR = newR;
     currentG = newG;
     currentB = newB;
+    
+    // Fill all LEDs with adjusted brightness colors
+    for (int i = 0; i < num_leds; i++) {
+      RGBpayload[i * 3 + 0] = currentR;
+      RGBpayload[i * 3 + 1] = currentG;
+      RGBpayload[i * 3 + 2] = currentB;
+    }
+    publishPayload();
   }
 
   lastDistance = distance;
+  lastTime = currentTime;
 
   Serial.print(" Distance: ");
   Serial.print(distance);
-  Serial.print(" cm  Δ=");
-  Serial.print(delta);
-  Serial.print("   R=");
+  Serial.print("cm  Speed: ");
+  Serial.print(speed);
+  Serial.print("cm/s  Brightness: ");
+  Serial.print(brightnessFactor * 100);
+  Serial.print("%  R=");
   Serial.print(newR);
   Serial.print(" G=");
   Serial.print(newG);
@@ -115,38 +150,27 @@ void getGradientColor(long distance, int &r, int &g, int &b) {
     r = 255; g = 255; b = 0;
   } else if (distance < 25) {     // Green
     r = 0; g = 255; b = 0;
-  } 
-  // else if (distance < 30) {   // Cyan
-  //  r = 0; g = 150; b = 255;
-  // }
-   else {                        // Blue
+  } else {                        // Blue
     r = 0; g = 0; b = 255;
   }
 }
 
 // ======== Scroll Rows Bottom to Top ========
 void scrollRowsBottomToTop(int newR, int newG, int newB, int delta) {
-  // Adjust scroll speed and brightness based on movement speed
+  // Adjust scroll speed based on movement speed
   int stepDelay;
   if (delta < 3) stepDelay = 250;
   else if (delta < 10) stepDelay = 120;
   else stepDelay = 40;
 
-  float scaleFactor = map(constrain(delta, 1, 30), 1, 30, 50, 100) / 100.0;
-  int scaledR = constrain((int)(newR * scaleFactor), 0, 255);
-  int scaledG = constrain((int)(newG * scaleFactor), 0, 255);
-  int scaledB = constrain((int)(newB * scaleFactor), 0, 255);
-
   for (int row = 5; row >= 0; row--) {
-    fillRowColor(row, scaledR, scaledG, scaledB);
+    fillRowColor(row, newR, newG, newB);
     publishPayload();
     delay(stepDelay);
   }
 
-  Serial.print(" Scroll bottom→top done, delay=");
-  Serial.print(stepDelay);
-  Serial.print("ms, brightness scale=");
-  Serial.println(scaleFactor, 2);
+  Serial.print("Scroll bottom→top done, delay=");
+  Serial.println(stepDelay);
 }
 
 // ======== Fill One Row (12 LEDs) with Color ========
