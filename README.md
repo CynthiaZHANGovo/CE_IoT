@@ -1,4 +1,4 @@
-# AuraSense: Lumi — IoT Lighting System
+# AuraSense: Interactive IoT Lighting System
 
 ### Directly linked to the final version: **[Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/distance_vespera)**
 
