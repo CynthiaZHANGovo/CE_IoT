@@ -1,118 +1,98 @@
-# Lumi — IoT Interactive Lighting System
+# AuraSense: Lumi — IoT Lighting System
 
-Lumi is an IoT-based interactive lighting experience that reacts to human proximity and synchronizes lighting effects between physical devices and a web interface. By combining ultrasonic sensing, real-time MQTT communication, and RGB lighting, Lumi creates an immersive, responsive light interaction both locally and remotely.
+## Project Overview
 
----
+AuraSense is an interactive IoT that translates physical presence and movement into a dynamic, colored light display. Using an ultrasonic sensor, it detects a user's distance and speed, expressing this data through a spectrum of colors and animations on an LED matrix. The system communicates via MQTT, making it real-time and responsive.
 
-## Introduction
+*Inspired by the Science Museum's experience :)*
 
-Lumi explores how physical interactions can extend into digital environments through IoT. When a person approaches the sensor, Lumi dynamically adjusts lighting color, brightness, or animation speed—either on a **local LED strip** or on a **remote web interface**.
+
+**Core Concept:** The light's "emotional state" changes based on interaction:
+*   **Curiosity & Approach:** The color palette shifts from cool blue to warm red as you get closer.
+*   **Withdrawal & Distance:** The colors cool down, returning to blue as you move away.
+*   **Sudden Movement:** Quick approaches or departures cause the colors to scroll faster and the overall brightness to increase, creating a more "excited" or "startled" response.
 
 This project provides two versions:
 
 | Version | Description |
 |---------|--------------|
-| **Local Lighting Version** | Uses a NeoPixel LED strip directly connected to the Arduino |
-| **Remote (MQTT-Only) Version** | Sends data to the cloud and displays lighting effects on the Lumi web page |
+| **Local Lighting Version** | Uses a NeoPixel LED strip directly connected to the Arduino, basically for testing |
+| **Remote (MQTT) Version** | Sends data to the cloud and displays lighting effects on the Lumi web page |
 
 ---
 
-## Prototype Components
+## initial ideas
 
-### 1. HC-SR04 Ultrasonic Distance Sensor
-**Purpose:** Measures the distance between a person and the lamp  
-**How it works:**  
-- Emits ultrasonic waves  
-- Waves reflect from an object  
-- Calculates distance based on the return time  
+### sketch
+![My Sketch](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/sketch.jpg)
+---
+**Design Philosophy:**
+The initial concept explored multiple sensing modalities to create an interactive lighting system. But limited due to the time and devices.
 
-**In Lumi:**  
-Acts as the interactive input that controls lighting color, brightness, and animation speed based on proximity.
+**Considered Sensing Options:**
+- **Pulse Detection** ❌ 
+  - *Rationale:* While offering personalized biofeedback, required specialized hardware and raised privacy concerns for continuous monitoring
+- **Audio Sensing** ❌
+  - *Rationale:* Provided ambient environment responsiveness but susceptible to background noise and inconsistent in varied acoustic environments
+- **Distance Measurement** ✅ **SELECTED**
+  - *Rationale:* Delivers reliable presence detection, simple hardware requirements, and intuitive user interaction through proximity-based control
+
+## How It Works
+
+1.  **Sensing:** An HC-SR04 ultrasonic sensor continuously measures the distance to an object (like a person) in front of it.
+2.  **Processing:** An Arduino MKR WiFi 1010 board processes this data, calculating both the absolute distance and the speed of movement.
+3.  **Emotion Mapping:**
+    *   **Distance to Color:** A multi-stage gradient maps distance to a color (Red -> Orange -> Yellow -> Green -> Blue).
+    *   **Speed to Animation:** The speed of movement controls the scrolling speed of the LED animation and the overall brightness.
+    *   **Direction to Animation Flow:** Moving closer triggers a bottom-to-top scroll; moving away triggers a top-to-bottom scroll.
+4.  **Communication:** The processed color data is sent as a payload via the MQTT protocol using the PubSubClient library.
+5.  **Visualization:** The MQTT message is received by a separate visualization client (like the [Lumi WebSocket Client](https://www.iot.io/projects/lumi/)) to render the colorful, animated display in real-time.
+
+6. **Local testing:** NeoPixel RGB LED Strip (WS2812), displays physical lighting effects  
+
+
+
+### Hardware Requirements
+
+*   Arduino MKR WiFi 1010
+*   HC-SR04 Ultrasonic Distance Sensor
+*   Jumper Wires
+*   Breadboard
+*   USB Cable
+
+
+### Software & Library Dependencies
+
+*   [Arduino IDE](https://www.arduino.cc/en/software)
+*   Arduino Libraries:
+    *   `WiFiNINA`
+    *   `PubSubClient`
+    *   `SPI`
+*   An MQTT Broker (e.g., `mqtt.cetools.org`)
+*   A Visualization Client (for mine, [Lumi](https://www.iot.io/projects/lumi/))
 
 ---
 
-### 2. MKR WiFi 1010 (Arduino)
-**Purpose:** Main microcontroller for the system  
+## Important Version History
 
-**Key Features:**
-- Built-in Wi-Fi module  
-- Designed for IoT development  
-
-**In Lumi:**  
-- Reads sensor values  
-- Runs lighting animation logic  
-- Sends data to MQTT over Wi-Fi  
-
----
-
-### 3. Wi-Fi (WiFiNINA Library)
-**Purpose:** Network connectivity  
-
-**Usage:**  
-Enables the Arduino to connect to Wi-Fi and stream real-time data to the MQTT server, syncing data to the Lumi webpage.
-
----
-
-### 4. MQTT Communication (PubSubClient Library)
-**Purpose:** Real-time IoT data transfer  
-
-**Flow:**  
-`Arduino → MQTT → Lumi Web App`  
-
-**Usage:**  
-- Sends lighting data as MQTT payloads  
-- Lightweight and ideal for real-time IoT communication  
-
----
-
-### 5. NeoPixel RGB LED Strip (WS2812) *(Optional – Local Version)*
-**Purpose:** Displays physical lighting effects  
-
-**Why NeoPixel:**  
-- Individually addressable RGB LEDs  
-- Controlled using a single data line  
-
-**Usage:**  
-Local-only version to preview lighting effects without needing the web interface.
-
----
-
-## Design Logic
-
-The system maps distance to lighting behavior:
-
-| Distance | Output Behavior |
-|----------|------------------|
-| Far | Soft, calm, slow lighting |
-| Medium | Color shifts or increased brightness |
-| Close | Fast, vivid, reactive animations |
-
-**Processing Logic:**
-1. Read distance from ultrasonic sensor  
-2. Normalize distance value (e.g., to brightness or speed)  
-3. Apply lighting animation logic  
-4. Output either to NeoPixel or send to MQTT  
-
-This ensures both physical and web-based displays follow the same interaction logic.
-
----
-
-## Version History
-
-| Version | Status | Description | Link |
+| Version | Status | Description | Links |
 |---------|--------|-------------|-------|
-| **v1.0 — Local Standalone Lighting** | ✅ Released | Physical version using MKR WiFi 1010 + NeoPixel for local testing | *(Add link if available)* |
-| **v2.0 — MQTT Remote Lighting** | 🔥 Current | Sends data to cloud and visualizes lighting online | https://www.iot.io/projects/lumi/ |
+| **v1.0 - Distance Ranges** | 📜 Archived | roughly distinguish several distance ranges | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/compare/ad0f12b0d66cdc71687effed06de716ef45863a2...986309f521e14d347f0f91d1cd565a8aa7c90453) |
+| **v2.0 - Fixed Problem** | 📜 Archived | solved problems in v1, but color changed suddenly | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/compare/986309f521e14d347f0f91d1cd565a8aa7c90453...b122b0f2186ee7731a15b881799faed2ada4ab79) |
+| **v3.1 - ColorLineChangedOnebyOne** | 📜 Archived | This version makes the color changing achieved one line by one line, therefore it becomes more smooth. | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/compare/b122b0f2186ee7731a15b881799faed2ada4ab79...277526f0186fbcb261938e73845e274e22193348) |
+| **v4.1 - speed-based brightness control** | 📜 Archived | Faster movements create brighter colors while maintaining the row-scrolling animation effect. | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/compare/a61a09bc0e654fb48827a1caadbaad0c7560ac1d...bd5d6d186428b23f25da42fd3b5e6d04d364bc92) |
+| **v5.1 — Final version** | 🔥 Current | Added direction-based scrolling, enhanced the color gradient, and improved the brightness gradient for speed-responsive lighting. | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/distance_vespera.ino) |
 
 ---
 
 ## Additional Notes
 
-- Two modes supported:  
-  - **Offline Local Mode:** NeoPixel lighting only  
-  - **Online IoT Mode:** Syncs to Lumi web page via MQTT  
-- Network performance may affect lighting update speed in remote mode  
-- Future improvements may include two-way communication (web → device)
+- **divided_voltage_Note:**  
+  - [How I achieved it](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/divided_voltage_Note)
+
+
+- **Notes in class:**  
+  - [see files](https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/CE_Notes-main/Connected%20Evironments)  
 
 ---
 
