@@ -1,5 +1,8 @@
 # AuraSense: Lumi — IoT Lighting System
 
+### Directly linked to the final version: **[Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/distance_vespera)**
+
+
 ## Project Overview
 
 AuraSense is an interactive IoT that translates physical presence and movement into a dynamic, colored light display. Using an ultrasonic sensor, it detects a user's distance and speed, expressing this data through a spectrum of colors and animations on an LED matrix. The system communicates via MQTT, making it real-time and responsive.
@@ -21,7 +24,7 @@ This project provides two versions:
 
 ---
 
-## initial ideas
+## Initial Ideas
 
 ### sketch
 ![My Sketch](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/sketch.jpg)
@@ -81,7 +84,7 @@ The initial concept explored multiple sensing modalities to create an interactiv
 | **v2.0 - Fixed Problem** | 📜 Archived | solved problems in v1, but color changed suddenly | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/compare/986309f521e14d347f0f91d1cd565a8aa7c90453...b122b0f2186ee7731a15b881799faed2ada4ab79) |
 | **v3.1 - ColorLineChangedOnebyOne** | 📜 Archived | This version makes the color changing achieved one line by one line, therefore it becomes more smooth. | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/compare/b122b0f2186ee7731a15b881799faed2ada4ab79...277526f0186fbcb261938e73845e274e22193348) |
 | **v4.1 - speed-based brightness control** | 📜 Archived | Faster movements create brighter colors while maintaining the row-scrolling animation effect. | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/compare/a61a09bc0e654fb48827a1caadbaad0c7560ac1d...bd5d6d186428b23f25da42fd3b5e6d04d364bc92) |
-| **v5.1 — Final version** | 🔥 Current | Added direction-based scrolling, enhanced the color gradient, and improved the brightness gradient for speed-responsive lighting. | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/distance_vespera.ino) |
+| **v5.1 — Final version** | 🔥 Current | Added direction-based scrolling, enhanced the color gradient, and improved the brightness gradient for speed-responsive lighting. | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/distance_vespera) |
 
 ---
 
