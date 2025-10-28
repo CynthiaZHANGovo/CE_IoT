@@ -88,6 +88,10 @@ The initial concept explored multiple sensing modalities to create an interactiv
 
 ---
 
+## Testing
+Here are the testing, as well as the testing reflection: 
+(https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/Testing)
+
 ## Additional Notes
 
 - **divided_voltage_Note:**  
