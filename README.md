@@ -72,9 +72,10 @@ The initial concept explored multiple sensing modalities to create an interactiv
 
 *   Arduino MKR WiFi 1010
 *   HC-SR04 Ultrasonic Distance Sensor
-*   Jumper Wires
+*   Resistances
+*   Wires
 *   Breadboard
-*   USB Cable
+*   Micro_B-USB Cable
 
 
 ### Software & Library Dependencies
