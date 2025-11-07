@@ -1,91 +1,91 @@
 #include <Adafruit_NeoPixel.h>
 
-// ======== NeoPixel 设置 ========
-#define NEOPIXEL_PIN 6      // LED 数据线连接引脚
-#define NUMPIXELS 6         // 本地测试使用的 LED 数量
+// ======== NeoPixel Settings ========
+#define NEOPIXEL_PIN 6      // LED data pin
+#define NUMPIXELS 6         // Number of LEDs for local testing
 Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
-// ======== HC-SR04 超声波传感器 ========
+// ======== HC-SR04 Ultrasonic Sensor ========
 #define TRIG_PIN 8
 #define ECHO_PIN 9
 
-// ======== 全局变量 ========
-long lastDistance = 0;           // 上一次测量的距离
-int currentR = 0, currentG = 0, currentB = 255;  // 初始颜色蓝色
-int baseBrightness = 2;        // 初始亮度，灯条默认亮度
-int maxBrightness = 5;         // 最大亮度，距离变化大时使用
+// ======== Global Variables ========
+long lastDistance = 0;           // Last measured distance
+int currentR = 0, currentG = 0, currentB = 255;  // Initial color blue
+int baseBrightness = 2;        // Initial brightness, default for LED strip
+int maxBrightness = 5;         // Maximum brightness for large distance changes
 
-// ======== 函数声明 ========
-long readDistanceCM();                                   // 测距函数
-void adaptiveFlashColorLocal(int newR, int newG, int newB, int delta); // 自适应速度+亮度
-void setOverallBrightness(int brightness);              // 设置整体亮度
+// ======== Function Declarations ========
+long readDistanceCM();                                   // Distance measurement
+void adaptiveFlashColorLocal(int newR, int newG, int newB, int delta); // Adaptive speed + brightness
+void setOverallBrightness(int brightness);              // Set overall brightness
 
-// ======== Setup 初始化 ========
+// ======== Setup Initialization ========
 void setup() {
   Serial.begin(115200);
 
-  pixels.begin();                     // 初始化 LED
-  setOverallBrightness(baseBrightness); // 设置初始亮度
-  pixels.show();                      // 显示初始状态
+  pixels.begin();                     // Initialize LEDs
+  setOverallBrightness(baseBrightness); // Set initial brightness
+  pixels.show();                      // Display initial state
 
-  pinMode(TRIG_PIN, OUTPUT);          // 超声波发射引脚
-  pinMode(ECHO_PIN, INPUT);           // 超声波接收引脚
+  pinMode(TRIG_PIN, OUTPUT);          // Ultrasonic trigger pin
+  pinMode(ECHO_PIN, INPUT);           // Ultrasonic echo pin
 
-  Serial.println("✅ 本地测试初始化完成");
+  Serial.println("✅ Local test initialization completed");
 }
 
-// ======== Main Loop 主循环 ========
+// ======== Main Loop ========
 void loop() {
-  long distance = readDistanceCM();   // 读取距离
-  if (distance <= 0) return;          // 无效读数直接跳过
+  long distance = readDistanceCM();   // Read distance
+  if (distance <= 0) return;          // Skip invalid readings
 
-  // 限制距离在 5~100 cm 内，超出范围保持蓝色
+  // Limit distance to 5~100 cm, beyond range stays blue
   bool outOfRange = false;
   if (distance < 5 || distance > 80) {
-    distance = 100;  // 默认蓝色对应最远
+    distance = 100;  // Default blue for farthest distance
     outOfRange = true;
   }
 
   int newR, newG, newB;
 
   if (outOfRange) {
-    // 超出范围保持蓝色
+    // Stay blue when out of range
     newR = 0;
     newG = 0;
     newB = 255;
   } else {
-    // 近→红色，远→蓝色
-    if (distance < 20) {          // 非常近
+    // Near→red, Far→blue
+    if (distance < 20) {          // Very close
       newR = 255; 
-      newG = map(distance, 5, 20, 0, 100); // 逐渐增加绿色
+      newG = map(distance, 5, 20, 0, 100); // Gradually increase green
       newB = 0;
-    } else if (distance < 50) {   // 近
-      newR = map(distance, 20, 40, 255, 0); // 红色逐渐减小
-      newG = map(distance, 20, 40, 100, 0); // 绿色逐渐减小
-      newB = map(distance, 20, 40, 0, 100); // 蓝色逐渐增加
-    } else if (distance < 80) {   // 远
+    } else if (distance < 50) {   // Close
+      newR = map(distance, 20, 40, 255, 0); // Red gradually decreases
+      newG = map(distance, 20, 40, 100, 0); // Green gradually decreases
+      newB = map(distance, 20, 40, 0, 100); // Blue gradually increases
+    } else if (distance < 80) {   // Far
       newR = 0;
-      newG = map(distance, 40, 60, 0, 50); // 增加一点绿色
-      newB = map(distance, 40, 60, 100, 200); // 蓝色增加
-    } else {                       // 很远
+      newG = map(distance, 40, 60, 0, 50); // Add some green
+      newB = map(distance, 40, 60, 100, 200); // Blue increases
+    } else {                       // Very far
       newR = 0;
       newG = 0;
-      newB = 255;                   // 最远蓝色
+      newB = 255;                   // Farthest blue
     }
   }
 
-  int delta = abs(distance - lastDistance); // 距离变化量
+  int delta = abs(distance - lastDistance); // Distance change amount
 
   if (delta > 1) {
-    // 距离变化明显，调用自适应函数
+    // Significant distance change, call adaptive function
     adaptiveFlashColorLocal(newR, newG, newB, delta);
     currentR = newR; 
     currentG = newG; 
     currentB = newB;
   } else {
-    // 距离变化很小，保持初始亮度，不提高亮度
+    // Minimal distance change, maintain initial brightness without increase
     pixels.setBrightness(baseBrightness);
-    // 直接更新颜色，但亮度保持 baseBrightness
+    // Update color directly but maintain baseBrightness
     for (int i = 0; i < NUMPIXELS; i++) {
       pixels.setPixelColor(i, pixels.Color(newR, newG, newB));
     }
@@ -93,10 +93,10 @@ void loop() {
   }
 
   lastDistance = distance;
-  delay(100); // 延时 100ms 循环
+  delay(100); // 100ms loop delay
 }
 
-// ======== HC-SR04 测距函数 ========
+// ======== HC-SR04 Distance Measurement ========
 long readDistanceCM() {
   digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
@@ -104,40 +104,40 @@ long readDistanceCM() {
   delayMicroseconds(10);
   digitalWrite(TRIG_PIN, LOW);
 
-  long duration = pulseIn(ECHO_PIN, HIGH, 30000); // 最多30ms
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000); // Max 30ms
   if (duration == 0) {
-    Serial.println("⚠️ 无效距离");
+    Serial.println("⚠️ Invalid distance");
     return -1;
   }
 
-  long distance = duration / 58.2; // 转换为厘米
-  Serial.print("📏 当前距离: ");
+  long distance = duration / 58.2; // Convert to centimeters
+  Serial.print("📏 Current distance: ");
   Serial.print(distance);
   Serial.println(" cm");
   return distance;
 }
 
-// ======== 自适应速度和亮度变化 ========
+// ======== Adaptive Speed and Brightness Change ========
 void adaptiveFlashColorLocal(int newR, int newG, int newB, int delta) {
-  // 根据距离变化调整 LED 扫动速度
+  // Adjust LED sweep speed based on distance change
   int stepDelay;
-  if (delta < 3) stepDelay = 120;   // 小变化慢
-  else if (delta < 15) stepDelay = 60; // 中等
-  else stepDelay = 15;               // 大变化快
+  if (delta < 3) stepDelay = 120;   // Small change = slow
+  else if (delta < 15) stepDelay = 60; // Medium
+  else stepDelay = 15;               // Large change = fast
 
-  // 根据 delta 调整亮度：变化大→亮，变化小→暗
+  // Adjust brightness based on delta: large change→bright, small change→dim
   int dynamicBrightness = map(delta, 1, 30, baseBrightness, maxBrightness);
   dynamicBrightness = constrain(dynamicBrightness, baseBrightness, maxBrightness);
   pixels.setBrightness(dynamicBrightness);
 
   Serial.print("Δ=");
   Serial.print(delta);
-  Serial.print("  速度=");
+  Serial.print("  Speed=");
   Serial.print(stepDelay);
-  Serial.print("ms  亮度=");
+  Serial.print("ms  Brightness=");
   Serial.println(dynamicBrightness);
 
-  // 从下到上依次变色
+  // Change colors sequentially from bottom to top
   for (int i = 0; i < NUMPIXELS; i++) {
     pixels.setPixelColor(i, pixels.Color(newR, newG, newB));
     pixels.show();
@@ -145,10 +145,10 @@ void adaptiveFlashColorLocal(int newR, int newG, int newB, int delta) {
   }
 }
 
-// ======== 设置整体亮度 ========
+// ======== Set Overall Brightness ========
 void setOverallBrightness(int brightness) {
   // brightness: 0~255
   pixels.setBrightness(brightness);
-  Serial.print("💡 整体亮度设置为: ");
+  Serial.print("💡 Overall brightness set to: ");
   Serial.println(brightness);
 }
