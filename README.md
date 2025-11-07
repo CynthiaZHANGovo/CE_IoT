@@ -1,6 +1,6 @@
 # AuraSense: Interactive IoT Lighting System
 
-### View the final version of the code: **[Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/distance_vespera)**
+### View the final version of the code: **[Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/AuraSense)**
 
 
 ## Project Overview
@@ -27,7 +27,7 @@ This project provides two versions:
 ## Initial Ideas
 
 ### sketch
-![My Sketch](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/sketch.jpg)
+![My Sketch](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/VideosAndPhotos/Sketch.jpg)
 ---
 
 The initial concept explored multiple sensing modalities to create an interactive lighting system. But limited due to the time and devices.
@@ -61,10 +61,15 @@ The initial concept explored multiple sensing modalities to create an interactiv
 6.  **Local testing:** NeoPixel RGB LED Strip (WS2812), displays physical lighting effects
 
 
-### Physical Connection
-*Actual connection photos (Two resistances was later added)*
 
-![Connection Photo](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/VideosAndPhotos/Connection.jpg)
+### Physical Connection
+*Actual connection photos*
+
+<p float="left">
+  <img src="https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/VideosAndPhotos/board.jpg" width="50%" />
+  <img src="https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/VideosAndPhotos/what_it_looks.jpg" width="40%" />
+</p>
+
 
 
 
@@ -98,22 +103,23 @@ The initial concept explored multiple sensing modalities to create an interactiv
 | **v2.0 - Fixed Problem** | 📜 Archived | solved problems in v1, but color changed suddenly | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/compare/986309f521e14d347f0f91d1cd565a8aa7c90453...b122b0f2186ee7731a15b881799faed2ada4ab79) | |
 | **v3.1 - ColorLineChangedOnebyOne** | 📜 Archived | This version makes the color changing achieved one line by one line, therefore it becomes more smooth. | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/compare/b122b0f2186ee7731a15b881799faed2ada4ab79...277526f0186fbcb261938e73845e274e22193348) | [Video](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/VideosAndPhotos/v3.mp4) |
 | **v4.1 - speed-based brightness control** | 📜 Archived | Faster movements create brighter colors while maintaining the row-scrolling animation effect. | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/compare/a61a09bc0e654fb48827a1caadbaad0c7560ac1d...bd5d6d186428b23f25da42fd3b5e6d04d364bc92) | [Video](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/VideosAndPhotos/v4.mp4) |
-| **v5.1 — Final version** | 🔥 Current | Added direction-based scrolling, enhanced the color gradient, and improved the brightness gradient for speed-responsive lighting. | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/distance_vespera) | |
+| **v5.1 — Final version** | 🔥 Current | Added direction-based scrolling, enhanced the color gradient, and improved the brightness gradient for speed-responsive lighting. | [Source Code](https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/distance_vespera) | [Video](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/VideosAndPhotos/v——final.mp4) | |
+
 
 ---
 
 ## Testing
 Here are the testing, as well as the testing reflection: 
-(https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/Testing)
+[Testing](https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/Testing)
 
 ## Additional Notes
 
 - **divided_voltage_Note:**  
-  - [How I achieved it with added resistances](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/divided_voltage_Note)
+  - [How I achieved it with added resistances](https://github.com/CynthiaZHANGovo/CE_IoT/blob/main/Document/divided_voltage_Note)
 
 
 - **Notes in class:**  
-  - [see files](https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/CE_Notes-main/Connected%20Evironments)  
+  - [see files](https://github.com/CynthiaZHANGovo/CE_IoT/tree/main/Document/CE_Notes-main/Connected%20Evironments)  
 
 ---
 
